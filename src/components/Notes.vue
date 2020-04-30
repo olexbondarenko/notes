@@ -7,10 +7,10 @@
       :index="index"
     />
   </div>
-  <p class="align-center" v-else>
+  <div class="align-center" v-else>
     Заметок пока что нет.
     <router-link to="/note/add">Добавьте свою первую заметку</router-link>
-  </p>
+  </div>
 </template>
 
 <script>
@@ -23,11 +23,11 @@ export default {
   data() {
     return {};
   },
-  computed: {
-    ...mapGetters(["getNotes"])
-  },
   components: {
     NoteItem
+  },
+  computed: {
+    ...mapGetters(["getNotes"])
   }
 };
 </script>

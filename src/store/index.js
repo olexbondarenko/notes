@@ -1,12 +1,26 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import * as firebase from "firebase/app";
+import "firebase/firestore";
 import "firebase/auth";
 
 Vue.use(Vuex);
 
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
+  authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.VUE_APP_FIREBASE_DB_URL,
+  projectId: process.env.VUE_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VUE_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VUE_APP_FIREBASE_MESSAGING_SENDER_ID
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 export default new Vuex.Store({
   state: {
+    loaderActive: false,
     userLoggedIn: false,
     currentUser: {
       providerId: "",
@@ -15,113 +29,13 @@ export default new Vuex.Store({
       email: "",
       photoURL: ""
     },
-    notes: [],
-    notesData: [
-      {
-        id: 1,
-        title: "Действия на главной",
-        todos: [
-          {
-            id: 1,
-            title: "Перейти к созданию новой заметки",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 2,
-            title: "Перейти к изменению",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 3,
-            title: "Удалить (необходимо подтверждение)",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          }
-        ]
-      },
-      {
-        id: 2,
-        title: "Действия с заметкой",
-        todos: [
-          {
-            id: 1,
-            title: "Сохранить изменения",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 2,
-            title: "Отменить редактирование (необходимо подтверждение)",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 3,
-            title: "Удалить (необходимо подтверждение)",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 4,
-            title: "Отменить внесенное изменение",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 5,
-            title: "Повторить отмененное изменение",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          }
-        ]
-      },
-      {
-        id: 3,
-        title: "Действия с пунктами Todo",
-        todos: [
-          {
-            id: 1,
-            title: "Добавить",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 2,
-            title: "Удалить",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 3,
-            title: "Отредактировать текст",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          },
-          {
-            id: 4,
-            title: "Отметить как выполненный",
-            completed: false,
-            editable: false,
-            textareaRows: 1
-          }
-        ]
-      }
-    ]
+    notes: []
   },
+  methods: {},
   getters: {
+    getLoaderStatus(state) {
+      return state.loaderActive;
+    },
     isUserLoggedIn(state) {
       return state.userLoggedIn;
     },
@@ -134,9 +48,8 @@ export default new Vuex.Store({
   },
   mutations: {
     checkAuthState(state) {
-      firebase.auth().onAuthStateChanged(function(user) {
+      firebase.auth().onAuthStateChanged(user => {
         if (user) {
-          state.userLoggedIn = true;
           state.currentUser.providerId = user.providerId;
           state.currentUser.uid = user.uid;
           state.currentUser.displayName = user.displayName;
@@ -145,23 +58,26 @@ export default new Vuex.Store({
         }
       });
     },
-    setNotes(state) {
-      if (localStorage.notes === undefined) {
-        localStorage.setItem("notes", JSON.stringify(state.notesData));
+    setNotes(state, notes) {
+      if (notes !== undefined) {
+        state.notes = notes;
       }
-    },
-    updateNotes(state) {
-      state.notes = JSON.parse(localStorage.getItem("notes"));
     },
     addNote(state, newNote) {
       state.notes.unshift(newNote);
-      localStorage.setItem("notes", JSON.stringify(state.notes));
+      var usersRef = db.collection("users");
+      usersRef.doc(state.currentUser.uid).set({
+        notes: state.notes
+      });
     },
     deleteNote(state, noteId) {
       state.notes.forEach(function(note, index) {
         if (note.id === noteId) {
           state.notes.splice(index, 1);
-          localStorage.setItem("notes", JSON.stringify(state.notes));
+          var usersRef = db.collection("users");
+          usersRef.doc(state.currentUser.uid).set({
+            notes: state.notes
+          });
         }
       });
     },
@@ -169,9 +85,22 @@ export default new Vuex.Store({
       state.notes.forEach(function(note, index) {
         if (note.id === savedNote.id) {
           state.notes.splice(index, 1, savedNote);
-          localStorage.setItem("notes", JSON.stringify(state.notes));
+          var usersRef = db.collection("users");
+          usersRef.doc(state.currentUser.uid).set({
+            notes: state.notes
+          });
         }
       });
+    },
+    initialiseStore(state) {
+      if (localStorage.getItem("store")) {
+        this.replaceState(
+          Object.assign(state, JSON.parse(localStorage.getItem("store")))
+        );
+      }
+    },
+    signOutUser(state) {
+      state.userLoggedIn = false;
     }
   },
   actions: {
@@ -179,7 +108,16 @@ export default new Vuex.Store({
     async createUser(context, { userEmail, userPassword }) {
       await firebase
         .auth()
-        .createUserWithEmailAndPassword(userEmail, userPassword);
+        .createUserWithEmailAndPassword(userEmail, userPassword)
+        .then(() => {
+          let user = firebase.auth().currentUser;
+          let usersRef = db.collection("users");
+          if (user) {
+            usersRef.doc(user.uid).set({
+              notes: context.state.notes
+            });
+          }
+        });
     },
     // Begin sign in user
     async signInUser(context, { userEmail, userPassword }) {
@@ -188,6 +126,7 @@ export default new Vuex.Store({
         .signInWithEmailAndPassword(userEmail, userPassword)
         .then(() => {
           context.state.userLoggedIn = true;
+          context.dispatch("getNotesUser");
         });
     },
     // Begin sign out user
@@ -196,11 +135,7 @@ export default new Vuex.Store({
         .auth()
         .signOut()
         .then(function() {
-          context.state.userLoggedIn = false;
-          console.log("Вы успешно вышли.");
-        })
-        .catch(error => {
-          console.log(error);
+          context.commit("signOutUser");
         });
     },
     // Begin update profile user
@@ -213,9 +148,6 @@ export default new Vuex.Store({
         })
         .then(() => {
           context.commit("checkAuthState");
-        })
-        .catch(error => {
-          console.log(error);
         });
     },
     // Begin update email user
@@ -226,6 +158,26 @@ export default new Vuex.Store({
         .then(() => {
           context.commit("checkAuthState");
         });
+    },
+    getNotesUser(context) {
+      firebase.auth().onAuthStateChanged(async user => {
+        if (user) {
+          await db
+            .collection("users")
+            .doc(user.uid)
+            .get()
+            .then(doc => {
+              if (doc.exists) {
+                context.commit("setNotes", doc.data().notes);
+              } else {
+                console.log("No such document!");
+              }
+            })
+            .catch(error => {
+              console.log("Error getting document:", error);
+            });
+        }
+      });
     }
   },
   modules: {}

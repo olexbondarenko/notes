@@ -1,6 +1,6 @@
 <template>
   <div class="notes-form">
-    <div class="notes-form__form">
+    <form action="/" method="post" class="notes-form__form">
       <h1 class="notes-form__title">Регистрация</h1>
       <div class="notes-form__field">
         <label for="user-email">Введите Email</label>
@@ -20,6 +20,10 @@
           Создать аккаунт
         </button>
       </div>
+    </form>
+    <div class="notes-form__info">
+      Если у Вас уже есть аккаунт нажмите
+      <router-link to="/sign-in">Войти</router-link>
     </div>
   </div>
 </template>

@@ -1,97 +1,97 @@
 import Vue from "vue";
-import VueRouter from "vue-router";
 import store from "@/store";
+import VueRouter from "vue-router";
+
+import Home from "@/views/Home.vue";
+import CreateUser from "@/views/CreateUser.vue";
+import SignInUser from "@/views/SignInUser.vue";
+import AccountUser from "@/views/AccountUser.vue";
+import NoteAdd from "../views/NoteAdd.vue";
+import NoteEdit from "../views/NoteEdit.vue";
+import NotFound from "../views/NotFound.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
   {
-    path: "/registration/",
-    name: "registration",
-    component: () => import("../views/CreateUser.vue")
-  },
-  {
-    path: "/sign-in",
-    name: "sign-in",
-    component: () => import("../views/SignInUser.vue")
-  },
-  {
-    path: "/sign-out",
-    name: "sign-out",
-    meta: {
-      requiresAuth: true
-    }
-  },
-  {
-    path: "/account/",
-    name: "account",
-    meta: {
-      requiresAuth: true
-    },
-    component: () => import("../views/AccountUser.vue")
+    path: "*",
+    component: NotFound
   },
   {
     path: "/",
     name: "home",
     meta: {
-      requiresAuth: true
+      private: true
     },
-    component: () => import("../views/NoteAdd.vue")
+    component: Home
   },
   {
-    path: "/notes",
-    name: "notes",
-    meta: {
-      requiresAuth: true
-    },
-    component: () => import("../views/Notes.vue")
+    path: "/registration",
+    name: "registration",
+    component: CreateUser
   },
   {
-    path: "/note/add",
-    name: "note-add",
-    meta: {
-      requiresAuth: true
-    },
-    component: () => import("../views/NoteAdd.vue")
+    path: "/sign-in",
+    name: "sign-in",
+    component: SignInUser
   },
   {
-    path: "/note/:id",
-    name: "note",
+    path: "/sign-out",
+    name: "sign-out",
     meta: {
-      requiresAuth: true
+      private: true
     },
-    component: () => import("../views/NoteEdit.vue")
-  }
-];
-
-const router = new VueRouter({
-  mode: "history",
-  base: process.env.BASE_URL,
-  routes
-});
-
-router.beforeEach(async (to, from, next) => {
-  if (
-    from.name !== null &&
-    from.name !== undefined &&
-    to.matched.some(record => record.meta.requiresAuth)
-  ) {
-    if (!store.getters.isUserLoggedIn) {
-      next({
-        path: "/sign-in",
-        query: {
-          redirect: to.fullPath
-        }
-      });
-    } else if (to.name === "sign-out") {
+    beforeEnter: (to, from, next) => {
       store.dispatch("signOutUser").then(() => {
         next({
           path: "/sign-in"
         });
       });
-    } else {
-      next();
     }
+  },
+  {
+    path: "/account",
+    name: "account",
+    meta: {
+      private: true
+    },
+    component: AccountUser
+  },
+  {
+    path: "/note/add",
+    name: "note-add",
+    meta: {
+      private: true
+    },
+    component: NoteAdd
+  },
+  {
+    path: "/note/:id",
+    name: "note",
+    meta: {
+      private: true
+    },
+    component: NoteEdit
+  }
+];
+
+const router = new VueRouter({
+  mode: "hash",
+  base: process.env.BASE_URL,
+  routes
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.private)) {
+    Vue.nextTick(() => {
+      if (!store.getters.isUserLoggedIn) {
+        next({
+          name: "sign-in"
+        });
+      } else {
+        next();
+      }
+    });
   } else {
     next();
   }

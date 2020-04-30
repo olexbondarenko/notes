@@ -157,7 +157,7 @@ export default {
     // Begin delete confirm
     isConfirmDelete(noteId) {
       this.$store.commit("deleteNote", noteId);
-      this.$router.push({ path: "/notes" });
+      this.$router.push({ path: "/" });
     },
 
     // Begin update textarea height
@@ -226,7 +226,7 @@ export default {
     saveNote() {
       let savedNote = JSON.parse(JSON.stringify(this.currentState));
       this.$store.commit("saveNote", savedNote);
-      this.$router.push({ path: "/notes" });
+      this.$router.push({ path: "/" });
     },
 
     // Begin cancel edit note
@@ -236,7 +236,7 @@ export default {
         confirmText: "Подтвердить",
         cancelText: "Отменить",
         onConfirm: () => {
-          return this.$router.push({ path: "/notes" });
+          return this.$router.push({ path: "/" });
         }
       });
     },
@@ -273,7 +273,6 @@ export default {
       }
     }
   },
-
   beforeMount() {
     this.noteId = parseInt(this.$route.params.id);
     this.$store.state.notes.forEach(note => {

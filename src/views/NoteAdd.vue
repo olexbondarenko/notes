@@ -88,7 +88,6 @@ export default {
         });
         this.todoTitle = "";
         this.$refs.todotitle.setAttribute("rows", 1);
-        console.log(this.todos);
       }
     },
 
@@ -104,11 +103,9 @@ export default {
         this.note.title = this.noteTitle;
         this.note.todos = this.todos;
         this.$store.commit("addNote", this.note);
-        this.$router.push({ path: "/notes" });
+        this.$router.push({ path: "/" });
       }
     }
   }
 };
 </script>
-
-<style lang="scss" scoped></style>

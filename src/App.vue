@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <Loader :class="getLoaderStatus ? 'active' : ''" />
     <Header />
     <div class="page">
       <div class="container">
@@ -11,24 +12,22 @@
   </div>
 </template>
 <script>
-import { mapMutations, mapGetters } from "vuex";
+import Loader from "@/components/Loader.vue";
 import Header from "@/components/Header.vue";
-
+import { mapGetters } from "vuex";
 export default {
   name: "App",
   components: {
+    Loader,
     Header
   },
   computed: {
-    ...mapGetters(["getVisibilityAlert"])
+    ...mapGetters(["getLoaderStatus"])
   },
-  methods: {
-    ...mapMutations(["updateNotes", "checkAuthState"])
-  },
-  beforeMount() {
-    this.checkAuthState();
-    this.$store.commit("setNotes");
-    this.updateNotes();
+  beforeCreate() {
+    this.$store.commit("initialiseStore");
+    this.$store.commit("checkAuthState");
+    // this.$store.dispatch("userNotes");
   }
 };
 </script>
@@ -50,8 +49,6 @@ body {
 }
 
 body {
-  padding: 0;
-  margin: 0;
   background-color: #f6f6f6;
   font-family: Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -206,8 +203,8 @@ textarea {
       }
     }
   }
-  &__error {
-    color: #ff0476;
+  &__info {
+    padding-top: 20px;
   }
   &__btn {
     padding-top: 20px;

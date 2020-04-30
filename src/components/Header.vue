@@ -5,15 +5,15 @@
         <router-link class="header__logo" to="/">Notes</router-link>
         <nav class="header__nav">
           <template v-if="isUserLoggedIn">
-            <router-link class="header__nav-link" to="/note/add" exact
-              >Добавить</router-link
-            >
-            <router-link class="header__nav-link" to="/notes"
+            <router-link class="header__nav-link" to="/" exact
               >Заметки</router-link
+            >
+            <router-link class="header__nav-link" to="/note/add"
+              >Добавить</router-link
             >
           </template>
         </nav>
-        <div class="header__account" v-if="isUserLoggedIn">
+        <div class="header__account" v-if="isUserLoggedIn === true">
           <div class="header__account-image">
             <router-link to="/account" title="Аккаунт">
               <img
@@ -29,7 +29,7 @@
             </router-link>
           </div>
         </div>
-        <div class="header__options" v-if="!isUserLoggedIn">
+        <div class="header__options" v-if="isUserLoggedIn === false">
           <router-link
             class="header__options-link"
             to="/registration"
@@ -42,7 +42,7 @@
             <i class="fas fa-sign-in-alt"></i>
           </router-link>
         </div>
-        <div class="header__options" v-if="isUserLoggedIn">
+        <div class="header__options" v-if="isUserLoggedIn === true">
           <router-link
             class="header__options-link"
             to="/sign-out"
